@@ -1,8 +1,9 @@
 import crypto from "crypto";
-import jwt from "jsonwebtoken";
+import jwt, { Secret, SignOptions } from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
-const JWT_EXPIRY = process.env.JWT_EXPIRY || "24h";
+const JWT_SECRET: Secret = process.env.JWT_SECRET || "dev-secret";
+const JWT_EXPIRY: SignOptions["expiresIn"] =
+  (process.env.JWT_EXPIRY as SignOptions["expiresIn"]) || "24h";
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.randomBytes(16).toString("hex");
