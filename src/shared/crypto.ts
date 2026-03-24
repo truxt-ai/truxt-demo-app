@@ -13,9 +13,13 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, stored: string): Promise<boolean> {
   const [salt, hash] = stored.split(":");
   const verify = crypto.pbkdf2Sync(password, salt, 100000, 64, "sha512").toString("hex");
-  return hash === verify;
+  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(verify, "hex"));
 }
 
 export function generateToken(payload: Record<string, any>): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRY,
+    algorithm: "HS256",
+    issuer: "truxt-demo-app",
+  });
 }
