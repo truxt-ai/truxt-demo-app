@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --production
+      - run: npm run build
+
+      - name: Build Docker image
+        run: |
+          docker build -t truxt-demo-app:${{ github.sha }} .
+          docker tag truxt-demo-app:${{ github.sha }} truxt-demo-app:latest
+
+      - name: Push to registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+          docker push truxt-demo-app:${{ github.sha }}
+          docker push truxt-demo-app:latest
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying ${{ github.sha }} to production..."
+          # kubectl set image deployment/truxt-demo-app app=truxt-demo-app:${{ github.sha }}
