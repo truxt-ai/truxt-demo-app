@@ -18,8 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci --production
+      - run: npm install --omit=dev
       - run: npm run build
 
       - name: Build Docker image
