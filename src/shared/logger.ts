@@ -1,12 +1,26 @@
-const LOG_LEVEL = process.env.LOG_LEVEL || "info";
+import { getContext } from "./context";
 
+const LOG_LEVEL = process.env.LOG_LEVEL || "info";
 const levels: Record<string, number> = { debug: 0, info: 1, warn: 2, error: 3 };
 
 function log(level: string, message: string, meta?: Record<string, any>) {
-  if (levels[level] >= levels[LOG_LEVEL]) {
-    const entry = { timestamp: new Date().toISOString(), level, message, ...meta };
-    console.log(JSON.stringify(entry));
+  if (levels[level] < levels[LOG_LEVEL]) return;
+
+  const ctx = getContext();
+  const entry: Record<string, any> = {
+    timestamp: new Date().toISOString(),
+    level,
+    message,
+    ...meta,
+  };
+
+  // Enrich with request context when available
+  if (ctx) {
+    entry.requestId = ctx.requestId;
+    if (ctx.userId) entry.userId = ctx.userId;
   }
+
+  console.log(JSON.stringify(entry));
 }
 
 export const logger = {
