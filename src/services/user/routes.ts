@@ -38,3 +38,30 @@ router.post("/login", async (req, res) => {
 });
 
 export { router as userRouter };
+
+// Search and autocomplete — added via feature/user-search
+import { UserSearchService } from "./search";
+const searchService = new UserSearchService();
+
+router.get("/search", async (req, res) => {
+  const { q, role, createdAfter, createdBefore, page, pageSize, sortBy, sortOrder } = req.query;
+
+  const result = await searchService.search({
+    query: q as string,
+    role: role as any,
+    createdAfter: createdAfter as string,
+    createdBefore: createdBefore as string,
+    page: parseInt(page as string) || 1,
+    pageSize: parseInt(pageSize as string) || 20,
+    sortBy: sortBy as any,
+    sortOrder: sortOrder as any,
+  });
+
+  res.json({ data: result });
+});
+
+router.get("/suggest", async (req, res) => {
+  const { q, limit } = req.query;
+  const suggestions = await searchService.suggest(q as string, parseInt(limit as string) || 5);
+  res.json({ data: suggestions });
+});
