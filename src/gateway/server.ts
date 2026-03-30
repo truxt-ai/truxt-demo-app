@@ -1,6 +1,7 @@
 import express from "express";
 import { authMiddleware } from "./middleware/auth";
 import { userRouter } from "../services/user/routes";
+import { rateLimiter } from "./middleware/rate-limit";
 import { analyticsRouter } from "../services/analytics/routes";
 import { errorHandler } from "../shared/errors";
 import { logger } from "../shared/logger";
@@ -9,6 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(rateLimiter());
 app.use(authMiddleware);
 
 app.use("/api/users", userRouter);
