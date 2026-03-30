@@ -2,16 +2,18 @@ import { Router } from "express";
 import { UserService } from "./service";
 import { createUserSchema, updateUserSchema } from "./validation";
 import { validateBody } from "../../shared/validation";
+import { requireRole, requireSelfOrAdmin } from "../../gateway/middleware/rbac";
 
 const router = Router();
 const userService = new UserService();
 
-router.get("/", async (_req, res) => {
-  const users = await userService.listUsers();
-  res.json({ data: users });
+router.get("/", requireRole("admin"), async (_req, res) => {
+  const result = await userService.listUsers();
+  res.json({ data: result.users });
 });
 
-router.get("/:id", async (req, res) => {
+// Fixed: added requireSelfOrAdmin to prevent IDOR (closes #53)
+router.get("/:id", requireSelfOrAdmin("id"), async (req, res) => {
   const user = await userService.getUser(req.params.id);
   res.json({ data: user });
 });
@@ -21,12 +23,12 @@ router.post("/", validateBody(createUserSchema), async (req, res) => {
   res.status(201).json({ data: user });
 });
 
-router.put("/:id", validateBody(updateUserSchema), async (req, res) => {
+router.put("/:id", requireSelfOrAdmin("id"), validateBody(updateUserSchema), async (req, res) => {
   const user = await userService.updateUser(req.params.id, req.body);
   res.json({ data: user });
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireRole("admin"), async (req, res) => {
   await userService.deleteUser(req.params.id);
   res.status(204).send();
 });
